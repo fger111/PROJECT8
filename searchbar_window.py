@@ -1,107 +1,99 @@
+import os
+import cv2
 import tkinter as tk
-from tkinter import ttk
-from pymongo import MongoClient
+from tkinter import filedialog
+from PIL import Image, ImageTk
 
-# Define function to handle name click event
-def show_user_details(event):
-    # Get the selected item from the listbox
-    selected_item = search_results.get(search_results.curselection())
+class VideoPlayer:
+    def __init__(self, root):
+        self.root = root
+        self.video_path = None
+        self.is_playing = False
+        self.cap = None
 
-    # Extract the name from the selected item
-    name = selected_item.split("Name: ")[1].split(" Birthday:")[0]
+        # Create a canvas to display the video frames
+        self.canvas = tk.Canvas(root, width=960, height=540)
+        self.canvas.pack()
 
-    # Create a new window to display user details
-    details_window = tk.Toplevel(window)
-    details_window.title('User Details')
-    details_window.geometry('400x200')
+    def play_video(self):
+        if self.video_path is None:
+            return
 
-    # Retrieve and display user details
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client["registration"]
-    collection = db["patients"]
+        self.is_playing = True
+        self.cap = cv2.VideoCapture(self.video_path)
 
-    user_data = collection.find_one({"firstname": name.split()[0], "lastname": name.split()[1]})
+        while self.is_playing:
+            ret, frame = self.cap.read()
 
-    if user_data:
-        details_label = ttk.Label(details_window, text=f"User Details\n\nName: {user_data['firstname']} {user_data['lastname']}\nBirthday: {user_data['birthday']}\nAge: {user_data['age']}\nSex: {user_data['sex']}\nAddress: {user_data['address']}\nContact Number: {user_data['contact_number']}\nEmergency Contact Number: {user_data['emergency_contact_number']}\nEmergency Contact Name: {user_data['emergency_contact_name']}\nMarital Status: {user_data['marital_status']}", font=('Arial', 12))
-        details_label.pack(pady=10)
-    else:
-        details_label = ttk.Label(details_window, text="User details not found.", font=('Arial', 12))
-        details_label.pack(pady=10)
+            if ret:
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                image = Image.fromarray(frame_rgb)
+                # Resize the image to fit the canvas
+                image = image.resize((960, 540), Image.ANTIALIAS)
+                photo = ImageTk.PhotoImage(image)
+                self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
+                self.canvas.image = photo
 
-    client.close()
+                self.root.update()
+            else:
+                self.is_playing = False
 
-    # Close the current window after showing the user details
-    window.destroy()
-    import view
+        self.cap.release()
 
-# Define function to handle search button click
-def search_users():
-    # Clear any previous search results
-    search_results.delete(0, tk.END)
+    def search_video(self):
+        query = search_entry.get()
+        folder_path = r"C:\Users\Franco Gian Ramos\PycharmProjects\pythonProject8\data\colon_video"
+        files = os.listdir(folder_path)
+        found_video = False
 
-    # Get search term from input box
-    search_term = search_input.get()
+        for file in files:
+            if query.lower() in file.lower():
+                self.video_path = os.path.join(folder_path, file)
+                found_video = True
+                break
 
-    # Connect to MongoDB and perform search
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client["registration"]
-    collection = db["patients"]
+        if not found_video:
+            print("No matching video found.")
+        else:
+            # Update text based on query
+            if query.lower() == "part2":
+                text_label.config(text="SHEESH")
+            elif query.lower() == "simulation":
+                text_label.config(text="EYYY YOW")
+            else:
+                text_label.config(text="")
 
-    results = collection.find({"lastname": {"$regex": search_term, "$options": "i"}})
+    def play_button_click(self):
+        self.search_video()
+        self.play_video()
 
-    if len(list(results)) > 0:
-        # Display search results
-        results.rewind()  # Rewind the cursor back to the beginning
-        for result in results:
-            search_results.insert(tk.END, f"Name: {result['firstname']} {result['lastname']}  Birthday: {result['birthday']}   Age: {result['age']}   Sex: {result['sex']}   Address: {result['address']}   Contact Number: {result['contact_number']}  Emergency Contact Number: {result['emergency_contact_number']}  Emergency Contact Name: {result['emergency_contact_name']} Marital Status: {result['marital_status']}")
-    else:
-        # Display message if no results found
-        search_results.insert(tk.END, "No results found.")
-
-    client.close()
-
-# Create GUI window
+# Create the Tkinter window
 window = tk.Tk()
-window.title('User Search')
-window.geometry('700x500')
-window.config(bg="#2c3e50")  # Navy blue background color
+window.title("Video Player")
+window.geometry("1000x600")
+window.configure(bg="#34495e")
+window.state("zoomed")
 
-window.state('zoomed')
+# Create a VideoPlayer instance
+player = VideoPlayer(window)
 
-screen_width = window.winfo_screenwidth()
-screen_height = window.winfo_screenheight()
-x = (screen_width - window.winfo_reqwidth()) // 2
-y = (screen_height - window.winfo_reqheight()) // 2
+# Create a search label and entry
+search_label = tk.Label(window, text="Enter last name to search:", font=("Arial", 14), fg="#ffffff", bg="#34495e")
+search_label.pack(pady=20)
 
-window.geometry(f'+{x}+{y}')
+search_entry = tk.Entry(window, font=("Arial", 12))
+search_entry.pack()
 
-# Define styles
-style = ttk.Style(window)
-style.theme_use('clam')
-style.configure('TLabel', font=('Arial', 12), foreground="#000000")
-style.configure('TEntry', font=('Arial', 12))
-style.configure('TButton', font=('Arial', 12), foreground="#000000", background="#2980b9")
-
-# Add search elements
-search_label = ttk.Label(window, text='Search for user by last name:', foreground="#000000")
-search_label.pack(pady=10)
-
-search_input = ttk.Entry(window, width=30)
-search_input.pack()
-
-search_button = ttk.Button(window, text='Search', command=search_users, style='TButton', width=15)
+# Create a search button
+search_button = tk.Button(window, text="Search", font=("Arial", 12), command=player.search_video)
 search_button.pack(pady=10)
 
-search_results = tk.Listbox(window, width=100, height=30, font=('Arial', 12))
-search_results.pack()
+# Create a play button
+play_button = tk.Button(window, text="Play", font=("Arial", 12), command=player.play_button_click)
+play_button.pack(pady=10)
 
-# Bind listbox click event to show_user_details function
-search_results.bind('<<ListboxSelect>>', show_user_details)
+# Create a label to display the text
+text_label = tk.Label(window, text="", font=("Arial", 16), fg="#ffffff", bg="#34495e")
+text_label.pack(pady=10)
 
-window.grid_columnconfigure(0, weight=1)
-window.grid_columnconfigure(1, weight=1)
-window.grid_columnconfigure(2, weight=1)
-
-# Start GUI loop
 window.mainloop()

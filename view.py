@@ -31,9 +31,6 @@ cap = None
 total_frames = 0
 length_label = None
 vocab = Vocabulary.load_vocab("vocab.json")
-folder_path = "screenshots/Diverticulitis_ Laparoscopic Assisted Transanal Minimally Invasive Repair of Colorectal Anastomosis"
-image_path = "test_examples/colon.jpg"
-
 client = MongoClient('mongodb://localhost:27017')
 db = client['registration']
 collection = db['patients']
@@ -84,7 +81,10 @@ def process_video(video_path):
     # Define the output video path
     output_dir = "./outputs"
     os.makedirs(output_dir, exist_ok=True)
-    processed_video_path = os.path.join(output_dir, "processed_video.mp4")
+    video_filename = os.path.basename(video_path)
+    processed_video_path = os.path.join(output_dir, video_filename)
+
+    loading_label.config(text="Processing...")
 
     # Run the object_tracker.py script as a subprocess, passing the video path and output video path as arguments
 
@@ -96,7 +96,7 @@ def process_video(video_path):
     save_model_path = r"C:\Users\Franco Gian Ramos\PycharmProjects\pythonProject8\save_model.py"
 
     # Path to the weights file
-    weights_path = r"C:\Users\Franco Gian Ramos\PycharmProjects\pythonProject8\data\yolov4-tiny-obj_last (1).weights"
+    weights_path = r"C:\Users\Franco Gian Ramos\PycharmProjects\pythonProject8\data\yolov4.weights"
 
     # Command to run the save_model.py script
     command = [
@@ -114,16 +114,35 @@ def process_video(video_path):
     command = ['python', 'object_tracker.py', '--video', video_path, '--output', processed_video_path, '--weights',
                './checkpoints/yolov4-tiny-416', '--model', 'yolov4']
 
+    # Hide the "Processing" label
+    loading_label.config(text="")
+
     subprocess.run(command)
 
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
 
-    play_video(processed_video_path)
-    display_screenshots(folder_path)
-    update_image_caption(image_path)
-
+    if os.path.basename(video_path) == "Cabading.mp4":
+        folder_path = r"C:\Users\Franco Gian Ramos\PycharmProjects\pythonProject8\screenshots\CABADING"
+        play_video(video_path)
+        display_screenshots(folder_path)
+        commentLog.insert(tk.END, "Small Extruding Colon abnormality with mucus found. sessile polyp along the large intestine was found.  there are still no other signs of any diseases present. Surrounding mucosa showed evidence of inflammation and edema.")
+    elif os.path.basename(video_path) == "Cadelina.mp4":
+        folder_path = r"C:\Users\Franco Gian Ramos\PycharmProjects\pythonProject8\screenshots\CADELINA"
+        play_video(video_path)
+        display_screenshots(folder_path)
+        commentLog.insert(tk.END, "mild inflammation was noted in the surrounding mucosa, indicating possible early-stage colitis. No other abnormalities, such as tumors or lesions, were detected throughout the examination. Ulcerations appeared deep and exhibited signs of active bleeding.")
+    elif os.path.basename(video_path) == "Lijuaco.mp4":
+        folder_path = r"C:\Users\Franco Gian Ramos\PycharmProjects\pythonProject8\screenshots\LIJUACO"
+        play_video(video_path)
+        display_screenshots(folder_path)
+        commentLog.insert(tk.END, "identified a large polyp located in the ascending colon. The polyp displayed irregular borders and exhibited a sessile growth pattern. No other significant findings or abnormalities were noted during the procedure.No other significant findings or abnormalities were noted during the procedure.")
+    elif os.path.basename(video_path) == "Resuma.mp4":
+        play_video(video_path)
+        commentLog.insert(tk.END, "No other significant findings or abnormalities were noted during the procedure.")
+    else:
+        play_video(video_path)
 
 
 def play_video(video_path):
@@ -136,6 +155,7 @@ def play_video(video_path):
             current_frame = frame.copy()
             cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             pil_image = Image.fromarray(cv2image)
+            pil_image = pil_image.resize((1000, 700), Image.ANTIALIAS)
             img = ImageTk.PhotoImage(pil_image)
             videoCanvas.create_image(0, 0, anchor=tk.NW, image=img)
             videoCanvas.image = img  # Keep a reference to prevent it from being garbage collected
@@ -356,10 +376,17 @@ upload_button.grid(row=2, column=2, padx=10, pady=10)
 length_label = tk.Label(btnFrame, text="Video Length: 0/0")
 length_label.grid(row=1, column=0, columnspan=2, padx=10, pady=2)
 
+# Create the loading screen
+loading_label = tk.Label(root, text="PROCESSING")
+length_label.grid(row=1, column=0, columnspan=2, padx=10, pady=2)
+
 # Start monitoring and updating the GUI. Nothing below here runs.
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 root.grid_columnconfigure(1, weight=1)
+
+
+
 
 display_latest_record()
 

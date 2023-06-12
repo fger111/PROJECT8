@@ -18,13 +18,6 @@ collection = db["patients"]
 
 
 
-def open_file():
-    global video_path
-    video_path = filedialog.askopenfilename(filetypes=[("Video Files", "*.mp4")])
-
-    file_name = os.path.basename(video_path)
-
-    folder_path_label.config(text="Folder Path: " + file_name)  # Update the folder path label
 
 
 def save_video_data():
@@ -53,18 +46,17 @@ def enter_data():
         emergency_contact_name = emergency_contact_name_entry.get()
         emergency_contact_number = emergency_contact_number_entry.get()
         marital_status = marital_status_combobox.get()
-        video = save_video_data()
 
-        if firstname and lastname and birthday and age and sex and address and contact_number and emergency_contact_name and emergency_contact_number and marital_status and video:
+        if firstname and lastname and birthday and age and sex and address and contact_number and emergency_contact_name and emergency_contact_number and marital_status:
             # Insert data into the collection
-            database.insert_data(firstname, lastname, birthday, age, sex, address, contact_number, emergency_contact_name, emergency_contact_number, marital_status,video)
+            database.insert_data(firstname, lastname, birthday, age, sex, address, contact_number, emergency_contact_name, emergency_contact_number, marital_status)
 
             # Display success message
             messagebox.showinfo(title="Success", message="Data entered successfully!")
 
             window.destroy()
             import view
-            view.process_video(video_path)
+
 
         else:
             # Display error message if any field is blank
@@ -149,15 +141,6 @@ marital_status_label.grid(row=4, column=0, sticky="e")
 marital_status_combobox = ttk.Combobox(contact_info_frame, values=["Single", "Married", "Divorced", "Widowed"])
 marital_status_combobox.grid(row=4, column=1)
 
-# Upload Button
-upload_frame = tk.LabelFrame(frame, text="IMPORT COLONOSCOPY VIDEO", bg="#2c3e50", fg="#ffffff")
-upload_frame.pack(padx=10, pady=10, fill="both", expand=True)
-upload_button = tk.Button(upload_frame, text="Import", command=open_file)
-upload_button.pack(padx=10, pady=10)
-
-# Folder Path Label
-folder_path_label = tk.Label(upload_frame, text="Folder Path:", font=("Arial", 10), bg="#2c3e50", fg="#ffffff")
-folder_path_label.pack()
 
 # Submit Button
 button = tk.Button(frame, text="Submit", command=enter_data, bg="#2980b9", fg="#ffffff")

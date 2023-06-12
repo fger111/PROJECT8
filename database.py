@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 
-def insert_data(firstname, lastname, birthday, age, sex, address, contact_number, emergency_contact_name, emergency_contact_number, marital_status, video):
+def insert_data(firstname, lastname, birthday, age, sex, address, contact_number, emergency_contact_name, emergency_contact_number, marital_status):
     # Connect to MongoDB
     client = MongoClient('mongodb://localhost:27017')
     db = client['registration']
@@ -18,7 +18,6 @@ def insert_data(firstname, lastname, birthday, age, sex, address, contact_number
         'emergency_contact_name': emergency_contact_name,
         'emergency_contact_number': emergency_contact_number,
         'marital_status': marital_status,
-        'video': video
     }
 
     # Insert the document into the collection
