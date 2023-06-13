@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from ttkthemes import ThemedStyle
 from tkinter import messagebox
 
+
 # Connect to the MongoDB server
 client = MongoClient('mongodb://localhost:27017/')
 db = client['registration']
@@ -31,7 +32,11 @@ def check_credentials():
         # Go to window module
         home_window()
     else:
+
         message_label.config(text="Wrong username or password", foreground="red")
+        # Using grid layout
+        message_label.grid(row=1, column=0, padx=915, pady=620)
+
 
 def home_window():
     window.destroy()
@@ -61,20 +66,34 @@ login_frame = ttk.Frame(window)
 login_frame.pack(pady=100)
 
 # Create the username input
-username_label = ttk.Label(login_frame, text="Username:")
+username_label = ttk.Label(login_frame, text="Username:", font=("TkDefaultFont", 14))
 username_label.grid(row=0, column=0, padx=10, pady=10)
 username_input = ttk.Entry(login_frame)
 username_input.grid(row=0, column=1, padx=10, pady=10)
 
+
+
 # Create the password input
-password_label = ttk.Label(login_frame, text="Password:")
+password_label = ttk.Label(login_frame, text="Password:", font=("TkDefaultFont", 14))
 password_label.grid(row=1, column=0, padx=10, pady=10)
 password_input = ttk.Entry(login_frame, show="*")
 password_input.grid(row=1, column=1, padx=10, pady=10)
 
+
+
+
 # Create the login button
-login_button = ttk.Button(login_frame, text="Login", command=check_credentials, style="TButton")
+
+
+
+style = ttk.Style()
+style.configure("Custom.TButton", font=("TkDefaultFont", 14))
+
+# Create the button with the custom style
+login_button = ttk.Button(login_frame, text="Login", command=check_credentials, style="Custom.TButton")
 login_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky='WE')
+
+
 
 # Create the message
 message_label = ttk.Label(window, text="", font=('Helvetica', 12))
