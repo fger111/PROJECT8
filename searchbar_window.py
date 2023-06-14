@@ -77,20 +77,23 @@ window.state("zoomed")
 # Create a VideoPlayer instance
 player = VideoPlayer(window)
 
-# Create a search label and entry
-search_label = tk.Label(window, text="Enter last name to search:", font=("Arial", 14), fg="#ffffff", bg="#34495e")
-search_label.pack(pady=20)
+search_frame = tk.Frame(window, bg="#34495e")
+search_frame.pack(pady=20)
 
-search_entry = tk.Entry(window, font=("Arial", 12))
-search_entry.pack()
+search_label = tk.Label(search_frame, text="Enter last name to search:", font=("Arial", 24), fg="#ffffff", bg="#34495e")
+search_label.grid(row=0, column=0, padx=10)
+
+search_entry = tk.Entry(search_frame, font=("Arial", 24))
+search_entry.grid(row=0, column=1, padx=10)
 
 # Create a search button
-search_button = tk.Button(window, text="Search", font=("Arial", 12), command=player.search_video)
-search_button.pack(pady=10)
+search_button = tk.Button(search_frame, text="Search", font=("Arial", 16), command=player.search_video)
+search_button.grid(row=0, column=2, padx=10)
 
 # Create a play button
-play_button = tk.Button(window, text="Play", font=("Arial", 12), command=player.play_button_click)
+play_button = tk.Button(window, text="Play", font=("Arial", 16), command=player.play_button_click)
 play_button.pack(pady=10)
+
 
 # Create a label to display the text
 text_label = tk.Label(window, text="", font=("Arial", 16), fg="#ffffff", bg="#34495e")

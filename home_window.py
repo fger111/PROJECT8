@@ -23,14 +23,15 @@ y = (screen_height // 2) - (600 // 2)
 window.geometry(f'+{x}+{y}')
 
 # Create and configure the labels and buttons
-title_label = tk.Label(window, text="Welcome to DEEP-COLON", font=("Helvetica", 24, "bold"), fg="#ffffff", bg="#2c3e50")
+title_label = tk.Label(window, text="Welcome to DEEP-COLON", font=("Helvetica", 32, "bold"), fg="#ffffff", bg="#2c3e50")
 title_label.place(relx=0.5, rely=0.2, anchor="center")
 
-register_button = tk.Button(window, text="Register Patient", font=("Arial", 16), width=20, height=3, command=register_patient, bg="#3498db", fg="#ffffff")
-register_button.place(relx=0.3, rely=0.5, anchor="center")
+register_button = tk.Button(window, text="Register Patient", font=("Arial", 16), width=30, height=5, command=register_patient, bg="#3498db", fg="#ffffff")
+register_button.place(relx=0.3, rely=0.7, anchor="center")
 
-search_button = tk.Button(window, text="Search Patient", font=("Arial", 16), width=20, height=3, command=search_patient, bg="#2980b9", fg="#ffffff")
-search_button.place(relx=0.7, rely=0.5, anchor="center")
+search_button = tk.Button(window, text="Search Patient", font=("Arial", 16), width=30, height=5, command=search_patient, bg="#2980b9", fg="#ffffff")
+search_button.place(relx=0.7, rely=0.7, anchor="center")
+
 
 window.grid_columnconfigure(0, weight=1)
 window.grid_columnconfigure(1, weight=1)
