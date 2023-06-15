@@ -27,9 +27,12 @@ is_playing = False
 current_frame = None
 video_path = None
 processed_video_path = None
+videoCanvas = None
 cap = None
 total_frames = 0
 length_label = None
+seek_scale = None
+is_paused = False
 vocab = Vocabulary.load_vocab("vocab.json")
 client = MongoClient('mongodb://localhost:27017')
 db = client['registration']
@@ -71,8 +74,9 @@ transform = transforms.Compose([
 ])
 
 def open_file():
-    global video_path
+    global video_path, cap
     video_path = filedialog.askopenfilename(filetypes=[("Video Files", "*.mp4")])
+    cap = cv2.VideoCapture(video_path)
     if video_path:
         process_video(video_path)
 
@@ -142,46 +146,37 @@ def process_video(video_path):
         play_video(video_path)
         commentLog.insert(tk.END, "No other significant findings or abnormalities were noted during the procedure.")
     else:
-        play_video(video_path)
+        play_video()
 
 
-def play_video(video_path):
-    global is_playing, current_frame, cap
-    cap = cv2.VideoCapture(video_path)
-    is_playing = True
-    while is_playing:
-        ret, frame = cap.read()
-        if ret:
-            current_frame = frame.copy()
-            cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            pil_image = Image.fromarray(cv2image)
-            pil_image = pil_image.resize((1000, 700), Image.ANTIALIAS)
-            img = ImageTk.PhotoImage(pil_image)
-            videoCanvas.create_image(0, 0, anchor=tk.NW, image=img)
-            videoCanvas.image = img  # Keep a reference to prevent it from being garbage collected
+def play_video():
+    global current_frame, cap, is_paused
 
-            # Calculate the current frame number
-            current_frame_num = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
-
-            # Update the video length display
-            length_label.config(text=f"Video Length: {current_frame_num}/{total_frames}")
-
-            root.update()
-        else:
-            is_playing = False
-    cap.release()
-
+    if cap is not None:
+        if not is_paused:
+            ret, frame = cap.read()
+            if ret:
+                current_frame = frame.copy()
+                cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                pil_image = Image.fromarray(cv2image)
+                pil_image = pil_image.resize((1000, 700), Image.ANTIALIAS)
+                img = ImageTk.PhotoImage(pil_image)
+                videoCanvas.create_image(0, 0, anchor=tk.NW, image=img)
+                videoCanvas.image = img  # Keep a reference to prevent it from being garbage collected
+        root.after(30, play_video)
 
 def pause_video():
-    global is_playing
-    is_playing = False
+    global is_paused
+    is_paused = not is_paused
 
-def seek_video():
-    global current_frame, cap
+
+
+def seek_video(value):
+    global current_frame, cap, seek_scale
     if cap is not None:
         frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        frame_to_seek = int((seek_scale.get() / 100) * total_frames)
+        frame_to_seek = int((float(value) / 100) * total_frames)
         if frame_to_seek != frame_number:
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_to_seek)
             ret, frame = cap.read()
@@ -192,7 +187,14 @@ def seek_video():
                 img = ImageTk.PhotoImage(pil_image)
                 videoCanvas.create_image(0, 0, anchor=tk.NW, image=img)
                 videoCanvas.image = img  # Keep a reference to prevent it from being garbage collected
-                root.update()
+def update_slider_position():
+    global cap, seek_scale
+    if cap is not None:
+        frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        slider_position = int((frame_number / total_frames) * 100)
+        seek_scale.set(slider_position)
+    root.after(100, update_slider_position)
 
 def update_image_caption(folder_path):
     # Clear previous content
@@ -252,7 +254,7 @@ def display_screenshots(folder_path):
     leftFrame.grid_columnconfigure(0, weight=1)
 
 
-    
+
 def display_latest_record():
 
     canvas_patient_details = tk.Canvas(rightFrame, width=50, height=200)
@@ -359,33 +361,35 @@ btnFrame.grid(row=1, column=0, padx=8, pady=2, sticky=tk.NSEW)
 btnFrame.config(bg="#2c3e50")
 
 # Video Playback Buttons
-pause_button = tk.Button(btnFrame, text="Pause", command=pause_video)
-pause_button.grid(row=2, column=0, padx=190, pady=10)
+pause_button = tk.Button(btnFrame, text="Play", command=pause_video)
+pause_button.grid(row=3, column=0, padx=50, pady=5)
 
-play_button = tk.Button(btnFrame, text="Play", command=lambda: play_video(processed_video_path))
-play_button.grid(row=2,column=1,padx=190, pady=10)
 
-seek_scale = tk.Scale(btnFrame, from_=0, to=total_frames, orient=tk.HORIZONTAL)
-seek_scale.grid(row=2, column=0, columnspan=2, padx=10, pady=2)
+# Create a Scale (slider) widget
+seek_scale = tk.Scale(btnFrame, from_=0, to=100, orient=tk.HORIZONTAL, command=seek_video)
+seek_scale.set(0)  # Set the initial value of the slider
+seek_scale.grid(row=3, column=2, columnspan=2, padx=80, pady=2, sticky=tk.NW)
+seek_scale.configure(length=500)
+
 
 
 # Create the video upload button
 upload_button = tk.Button(btnFrame, text="Upload Video", command=open_file)
-upload_button.grid(row=2, column=2, padx=10, pady=10)
+upload_button.grid(row=3, column=4, padx=10, pady=10)
 
 length_label = tk.Label(btnFrame, text="Video Length: 0/0")
-length_label.grid(row=1, column=0, columnspan=2, padx=10, pady=2)
+length_label.grid(row=2, column=2, columnspan=2, padx=15, pady=2)
 
 # Create the loading screen
 loading_label = tk.Label(root, text="PROCESSING")
-length_label.grid(row=1, column=0, columnspan=2, padx=10, pady=2)
+length_label.grid(row=1, column=2, columnspan=2, padx=10, pady=2)
 
 # Start monitoring and updating the GUI. Nothing below here runs.
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 root.grid_columnconfigure(1, weight=1)
 
-
+update_slider_position()
 
 
 display_latest_record()
