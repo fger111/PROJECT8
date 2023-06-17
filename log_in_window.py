@@ -2,12 +2,14 @@ import tkinter as tk
 from tkinter import ttk
 from pymongo import MongoClient
 from ttkthemes import ThemedStyle
-from tkinter import messagebox
+import datetime
+
 
 
 # Connect to the MongoDB server
 client = MongoClient('mongodb://localhost:27017/')
-db = client['registration']
+db = client['login']
+collection = db['login_history']
 
 # Check if the user "Gastro-001" already exists in the database
 user = db.users.find_one({'username': 'Gastro-001'})
@@ -15,6 +17,23 @@ user = db.users.find_one({'username': 'Gastro-001'})
 # If the user "Gastro-001" doesn't exist, add them to the database
 if not user:
     db.users.insert_one({'username': 'Gastro-001', 'password': 'gastroenterologist'})
+
+
+def log_login(username, success):
+    # Get the current timestamp
+    timestamp = datetime.datetime.now()
+
+    # Create a log entry for the login attempt
+    log_entry = {
+        'username': username,
+        'timestamp': timestamp,
+        'success': success
+    }
+
+    # Insert the log entry into the database
+    db.login_history.insert_one(log_entry)
+
+
 
 def check_credentials():
     # Get the users from the input fields
@@ -29,13 +48,16 @@ def check_credentials():
         message_label.config(text="Login successful!", foreground="green")
         password_input.delete(0, tk.END)  # Clear the password entry field
 
+        # Call log_login() function to log the successful login
+        log_login(username, True)
+
         # Go to window module
         home_window()
     else:
-
         message_label.config(text="Wrong username or password", foreground="red")
         # Using grid layout
         message_label.grid(row=1, column=0, padx=915, pady=620)
+
 
 
 def home_window():
